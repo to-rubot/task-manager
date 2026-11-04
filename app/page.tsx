@@ -4,6 +4,12 @@ import { useEffect, useState } from "react";
 
 export default function Home() {
   const [taskName, setTaskName] = useState("");
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [editingDueDate, setEditingDueDate] = useState("");
+  const [editingPriority, setEditingPriority] = useState<
+    "high" | "medium" | "low"
+  >("medium");
   const [dueDate, setDueDate] = useState("");
   const [priority, setPriority] = useState<"high" | "medium" | "low">("medium");
   const [tasks, setTasks] = useState<
@@ -297,15 +303,93 @@ export default function Home() {
                       }}
                     />
 
-                    <p
-                      className={
-                        task.completed
-                          ? "font-medium line-through text-zinc-500"
-                          : "font-medium"
-                      }
-                    >
-                      {task.name}
-                    </p>
+                    {editingIndex === index ? (
+                      <div className="flex w-full flex-col gap-2">
+                        <input
+                          type="text"
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          className="w-full rounded-lg border border-blue-500 bg-zinc-950 px-3 py-2 text-white"
+                        />
+
+                        <div>
+                          <label className="mb-1 block text-sm text-zinc-400">
+                            期限
+                          </label>
+                          <input
+                            type="date"
+                            value={editingDueDate}
+                            onChange={(e) => setEditingDueDate(e.target.value)}
+                            style={{ colorScheme: "dark" }}
+                            className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="mb-1 block text-sm text-zinc-400">
+                            優先度
+                          </label>
+                          <select
+                           value={editingPriority}
+                           onChange={(e) =>
+                            setEditingPriority(
+                              e.target.value as "high" | "medium" | "low"
+                            )
+                          }
+                          className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-white"
+                        >
+                          <option value="high">🔴 高</option>
+                          <option value="medium">🟡 中</option>
+                          <option value="low">🟢 低</option>
+                        </select>
+                      </div>
+
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!editingName.trim()) return;
+
+                              setTasks((prev) =>
+                                prev.map((t, i) =>
+                                  i === index
+                                    ? {
+                                        ...t,
+                                        name: editingName.trim(),
+                                        dueDate: editingDueDate,
+                                        priority: editingPriority,
+                                      }
+                                    : t
+                                )
+                              );
+
+                              setEditingIndex(null);
+                            }}
+                            className="rounded-lg bg-blue-600 px-3 py-1 text-sm text-white"
+                          >
+                            保存
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setEditingIndex(null)}
+                            className="rounded-lg border border-zinc-600 px-3 py-1 text-sm text-white"
+                          >
+                            キャンセル
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p
+                        className={
+                          task.completed
+                            ? "font-medium line-through text-zinc-500"
+                            : "font-medium"
+                          }
+                        >
+                          {task.name}
+                        </p>
+                      )}
                   </div>
 
                   <p
@@ -330,6 +414,19 @@ export default function Home() {
                       ? "🟢 低"
                       : "🟡 中"}
                   </p>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingIndex(index);
+                      setEditingName(task.name);
+                      setEditingDueDate(task.dueDate);
+                      setEditingPriority(task.priority ?? "medium");
+                    }}
+                    className="mt-3 mr-2 rounded-lg border border-blue-400 px-3 py-1 text-sm text-blue-400 hover:bg-blue-950"
+                  >
+                    編集
+                  </button>
 
                   <button
                     onClick={() => {
