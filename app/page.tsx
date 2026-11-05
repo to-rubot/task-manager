@@ -21,6 +21,9 @@ export default function Home() {
   }[]
   >([]);
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
+  const [selectedPriorities, setSelectedPriorities] = useState<
+    ("high" | "medium" | "low")[]
+  >(["high", "medium", "low"]);
   const [sortOrder, setSortOrder] = useState<
   "added" | "due" | "priority"
 >("added");
@@ -57,11 +60,17 @@ export default function Home() {
   const filteredTasks = tasks
   .map((task, index) => ({ task, index }))
   .filter(({ task }) => {
-    if (filter === "active") return !task.completed;
-    if (filter === "completed") return task.completed;
-    return true;
-  });
+    const matchesStatus =
+      filter === "all" ||
+      (filter === "active" && !task.completed) ||
+      (filter === "completed" && task.completed);
 
+    const matchesPriority = selectedPriorities.includes(
+      task.priority ?? "medium"
+    );
+
+    return matchesStatus && matchesPriority;
+  });
   const today = new Date().toLocaleDateString("sv-SE");
 
   const isOverdue = (task: {
@@ -250,6 +259,39 @@ export default function Home() {
               <p className="text-xl font-bold">{completedCount}件</p>
             </div>
           </div>
+
+          <div className="mb-4 rounded-lg border border-zinc-700 p-4">
+            <p className="mb-3 text-sm font-medium">
+              優先度で絞り込み
+            </p>
+
+            <div className="flex flex-wrap gap-4">
+              {([
+                { value: "high", label: "🔴 高" },
+                { value: "medium", label: "🟡 中" },
+                { value: "low", label: "🟢 低" },
+              ] as const).map((item) => (
+                <label
+                  key={item.value}
+                  className="flex cursor-pointer items-center gap-2 text-sm"
+                >
+                <input
+                  type="checkbox"
+                  checked={selectedPriorities.includes(item.value)}
+                  onChange={(e) => {
+                    setSelectedPriorities((prev) =>
+                      e.target.checked
+                      ? [...prev, item.value]
+                      : prev.filter((p) => p !== item.value)
+                    );
+                  }}
+                  className="h-4 w-4 accent-blue-600"
+                />
+                {item.label}
+              </label>
+            ))}
+          </div>
+        </div>
 
           <div className="mb-4 flex gap-2">
             <button
