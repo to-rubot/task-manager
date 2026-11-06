@@ -10,20 +10,31 @@ export default function Home() {
   const [editingPriority, setEditingPriority] = useState<
     "high" | "medium" | "low"
   >("medium");
+  const [editingCategory, setEditingCategory] = useState<
+    "work" | "study" | "personal" | "unset"
+  >("unset");
   const [dueDate, setDueDate] = useState("");
   const [priority, setPriority] = useState<"high" | "medium" | "low">("medium");
+  const [category, setCategory] = useState<
+    "work" | "study" | "personal"
+  >("work");
   const [tasks, setTasks] = useState<
   {
     name: string;
     dueDate: string;
     completed: boolean;
     priority?: "high" | "medium" | "low";
+    category?: "work" | "study" | "personal";
   }[]
   >([]);
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedPriorities, setSelectedPriorities] = useState<
     ("high" | "medium" | "low")[]
   >(["high", "medium", "low"]);
+  const [selectedCategory, setSelectedCategory] = useState<
+    "all" | "work" | "study" | "personal" | "unset"
+  >("all");
   const [sortOrder, setSortOrder] = useState<
   "added" | "due" | "priority"
 >("added");
@@ -69,8 +80,23 @@ export default function Home() {
       task.priority ?? "medium"
     );
 
-    return matchesStatus && matchesPriority;
+    const matchesCategory =
+      selectedCategory === "all" ||
+      (selectedCategory === "unset" && !task.category) ||
+      task.category === selectedCategory;
+
+    const matchesSearch = task.name
+      .toLowerCase()
+      .includes(searchQuery.trim().toLowerCase());
+
+    return (
+      matchesStatus &&
+      matchesPriority &&
+      matchesSearch &&
+      matchesCategory
+    );
   });
+
   const today = new Date().toLocaleDateString("sv-SE");
 
   const isOverdue = (task: {
@@ -188,6 +214,26 @@ export default function Home() {
             </select>
           </div>
 
+          <div>
+            <label className="mb-2 block text-sm font-medium">
+              カテゴリ
+            </label>
+
+            <select
+              value={category}
+              onChange={(e) =>
+                setCategory(
+                  e.target.value as "work" | "study" | "personal"
+                )
+              }
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-white"
+            >
+              <option value="work">💼 仕事</option>
+              <option value="study">📚 勉強</option>
+              <option value="personal">🏠 プライベート</option>
+            </select>
+          </div>
+
           <button
             type="button"
             onClick={() => {
@@ -199,7 +245,8 @@ export default function Home() {
                   name: taskName,
                   dueDate,
                   completed: false,
-                  priority
+                  priority,
+                  category,
                 },
               ]);
 
@@ -216,6 +263,16 @@ export default function Home() {
           <h2 className="mb-3 text-xl font-semibold">
             タスク一覧（{tasks.length}件）
           </h2>
+
+          <div className="mb-4">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="🔍 タスク名を検索..."
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2 text-white placeholder-zinc-500 focus:border-blue-500 focus:outline-none"
+            />
+          </div>
 
           <div className="mb-4 flex items-center justify-between gap-3">
             <span className="text-sm text-zinc-400">並び替え</span>
@@ -292,6 +349,46 @@ export default function Home() {
             ))}
           </div>
         </div>
+
+        <div className="mb-4">
+          <label className="mb-2 block text-sm font-medium">
+            カテゴリで絞り込み
+          </label>
+
+          <select
+            value={selectedCategory}
+            onChange={(e) =>
+              setSelectedCategory(
+                e.target.value as
+                  | "all"
+                  | "work"
+                  | "study"
+                  | "personal"
+                  | "unset"
+                )
+              }
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white"
+            >
+              <option value="all">すべてのカテゴリ</option>
+              <option value="work">💼 仕事</option>
+              <option value="study">📚 勉強</option>
+              <option value="personal">🏠 プライベート</option>
+              <option value="unset">未設定</option>
+            </select>
+          </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            setSearchQuery("");
+            setFilter("all");
+            setSelectedPriorities(["high", "medium", "low"]);
+            setSelectedCategory("all");
+          }}
+          className="mb-4 w-full rounded-lg border border-zinc-600 px-4 py-2 text-sm text-white hover:bg-zinc-800"
+        >
+          🔄 絞り込みをリセット
+        </button>
 
           <div className="mb-4 flex gap-2">
             <button
@@ -386,6 +483,31 @@ export default function Home() {
                         </select>
                       </div>
 
+                      <div>
+                        <label className="mb-1 block text-sm text-zinc-400">
+                          カテゴリ
+                        </label>
+
+                        <select
+                          value={editingCategory}
+                          onChange={(e) =>
+                            setEditingCategory(
+                              e.target.value as
+                                | "work"
+                                | "study"
+                                | "personal"
+                                | "unset"
+                            )
+                          }
+                          className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-white"
+                        >
+                          <option value="work">💼 仕事</option>
+                          <option value="study">📚 勉強</option>
+                          <option value="personal">🏠 プライベート</option>
+                          <option value="unset">未設定</option>
+                        </select>
+                      </div>
+
                         <div className="flex gap-2">
                           <button
                             type="button"
@@ -400,6 +522,7 @@ export default function Home() {
                                         name: editingName.trim(),
                                         dueDate: editingDueDate,
                                         priority: editingPriority,
+                                        category: editingCategory === "unset" ? undefined : editingCategory,
                                       }
                                     : t
                                 )
@@ -457,6 +580,17 @@ export default function Home() {
                       : "🟡 中"}
                   </p>
 
+                  <p className="mt-1 text-sm text-zinc-400">
+                    カテゴリ：
+                    {task.category === "work"
+                      ? "💼 仕事"
+                      : task.category === "study"
+                      ? "📚 勉強"
+                      : task.category === "personal"
+                      ? "🏠 プライベート"
+                      : "未設定"}
+                    </p>
+
                   <button
                     type="button"
                     onClick={() => {
@@ -464,6 +598,7 @@ export default function Home() {
                       setEditingName(task.name);
                       setEditingDueDate(task.dueDate);
                       setEditingPriority(task.priority ?? "medium");
+                      setEditingCategory(task.category ?? "unset");
                     }}
                     className="mt-3 mr-2 rounded-lg border border-blue-400 px-3 py-1 text-sm text-blue-400 hover:bg-blue-950"
                   >
