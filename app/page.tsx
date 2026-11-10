@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 export default function Home() {
   const [taskName, setTaskName] = useState("");
+  const [taskNameError, setTaskNameError] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingName, setEditingName] = useState("");
   const [editingDueDate, setEditingDueDate] = useState("");
@@ -169,6 +170,38 @@ export default function Home() {
   
   const activeCount = tasks.length - completedCount;
 
+  const overdueCount = tasks.filter((task) => isOverdue(task)).length;
+
+  const dueTodayCount = tasks.filter((task) => isDueToday(task)).length;
+
+  const addTask = () => {
+    if (!taskName.trim()) {
+      setTaskNameError("タスク名を入力してください");
+      return;
+    }
+
+    setTaskNameError("");
+
+    setTasks((prev) => [
+      ...prev,
+      {
+        name: taskName.trim(),
+        dueDate,
+        completed: false,
+        priority,
+        category,
+      },
+    ]);
+
+    setTaskName("");
+    setDueDate("");
+  };
+
+  const tabClass = (value: "all" | "active" | "completed") =>
+    filter === value
+      ? "rounded-lg bg-white px-3 py-2 text-sm font-medium text-black"
+      : "rounded-lg border border-zinc-600 px-3 py-2 text-sm";
+
   const downloadBackup = () => {
     const backupData = {
       version: 1,
@@ -257,7 +290,13 @@ export default function Home() {
           タスク管理アプリ
         </h1>
 
-        <div className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            addTask();
+          }}
+          className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900 p-6"
+        >
           <div>
             <label className="mb-2 block text-sm font-medium">
               タスク名
@@ -266,10 +305,17 @@ export default function Home() {
             <input
               type="text"
               value={taskName}
-              onChange={(e) => setTaskName(e.target.value)}
+              onChange={(e) => {
+                setTaskName(e.target.value);
+                if (taskNameError) setTaskNameError("");
+              }}
               placeholder="例：資料を作る"
               className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-white"
             />
+
+            {taskNameError && (
+              <p className="mt-2 text-sm text-red-400">{taskNameError}</p>
+            )}
           </div>
 
           <div>
@@ -328,29 +374,12 @@ export default function Home() {
           </div>
 
           <button
-            type="button"
-            onClick={() => {
-              if (!taskName.trim()) return;
-
-              setTasks((prev) => [
-                ...prev,
-                {
-                  name: taskName,
-                  dueDate,
-                  completed: false,
-                  priority,
-                  category,
-                },
-              ]);
-
-              setTaskName("");
-              setDueDate("");
-            }}
+            type="submit"
             className="w-full rounded-lg bg-white px-4 py-2 font-medium text-black"
           >
             タスクを追加
           </button>
-        </div>
+        </form>
 
         <div className="mt-8">
 
@@ -382,6 +411,21 @@ export default function Home() {
           <h2 className="mb-3 text-xl font-semibold">
             タスク一覧（{tasks.length}件）
           </h2>
+
+          {(overdueCount > 0 || dueTodayCount > 0) && (
+            <div className="mb-4 rounded-lg border border-red-900 bg-red-950 px-4 py-3 text-sm">
+              {overdueCount > 0 && (
+                <p className="text-red-300">
+                  ⚠️ 期限切れが {overdueCount} 件あります
+                </p>
+              )}
+              {dueTodayCount > 0 && (
+                <p className="text-yellow-300">
+                  🟡 今日が期限のタスクが {dueTodayCount} 件あります
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="mb-4">
             <input
@@ -530,7 +574,7 @@ export default function Home() {
             <button
               type="button"
               onClick={() => setFilter("all")}
-              className="rounded-lg border border-zinc-600 px-3 py-2 text-sm"
+              className={tabClass("all")}
             >
               すべて
             </button>
@@ -538,7 +582,7 @@ export default function Home() {
             <button
               type="button"
               onClick={() => setFilter("active")}
-              className="rounded-lg border border-zinc-600 px-3 py-2 text-sm"
+              className={tabClass("active")}
             >
               未完了
             </button>
@@ -546,7 +590,7 @@ export default function Home() {
             <button
               type="button"
               onClick={() => setFilter("completed")}
-              className="rounded-lg border border-zinc-600 px-3 py-2 text-sm"
+              className={tabClass("completed")}
             >
               完了済み
             </button>
@@ -554,7 +598,9 @@ export default function Home() {
 
           {filteredTasks.length === 0 ? (
             <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6 text-sm text-zinc-400">
-              まだタスクはありません
+              {tasks.length === 0
+                ? "まだタスクはありません"
+                : "条件に合うタスクがありません。絞り込みをリセットしてみてください"}
             </div>
           ) : (
             <div className="space-y-3">
