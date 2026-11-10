@@ -151,11 +151,104 @@ export default function Home() {
     );
   });
 
+  const workCount = tasks.filter(
+    (task) => task.category === "work"
+  ).length;
+  
+  const studyCount = tasks.filter(
+    (task) => task.category === "study"
+  ).length;
+  
+  const personalCount = tasks.filter(
+    (task) => task.category === "personal"
+  ).length;
+
   const completedCount = tasks.filter(
     (task) => task.completed
   ).length;
   
   const activeCount = tasks.length - completedCount;
+
+  const downloadBackup = () => {
+    const backupData = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      tasks,
+    };
+  
+    const blob = new Blob(
+      [JSON.stringify(backupData, null, 2)],
+      { type: "application/json" }
+    );
+  
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+  
+    link.href = url;
+    link.download = `task-manager-backup-${
+      new Date().toLocaleDateString("sv-SE")
+    }.json`;
+  
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  
+    URL.revokeObjectURL(url);
+  };
+
+  const restoreBackup = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+  
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+  
+      if (
+        data.version !== 1 ||
+        !Array.isArray(data.tasks) ||
+        !data.tasks.every(
+          (task: unknown) =>
+            typeof task === "object" &&
+            task !== null &&
+            "name" in task &&
+            typeof task.name === "string" &&
+            "dueDate" in task &&
+            typeof task.dueDate === "string" &&
+            "completed" in task &&
+            typeof task.completed === "boolean" &&
+            (!("priority" in task) ||
+              task.priority === undefined ||
+              ["high", "medium", "low"].includes(
+                String(task.priority)
+              )) &&
+            (!("category" in task) ||
+              task.category === undefined ||
+              ["work", "study", "personal"].includes(
+                String(task.category)
+              ))
+        )
+      ) {
+        alert("バックアップファイルの形式が正しくありません。");
+        return;
+      }
+  
+      const ok = window.confirm(
+        "現在のタスクをバックアップの内容で置き換えます。よろしいですか？"
+      );
+  
+      if (!ok) return;
+  
+      setTasks(data.tasks);
+      alert("バックアップを復元しました！");
+    } catch {
+      alert("ファイルの読み込みに失敗しました。");
+    } finally {
+      event.target.value = "";
+    }
+  };
 
   return (
     <main className="min-h-screen bg-zinc-950 px-6 py-10 text-white">
@@ -260,6 +353,32 @@ export default function Home() {
         </div>
 
         <div className="mt-8">
+
+        <div className="mt-6 mb-6 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+          <h2 className="mb-3 text-lg font-semibold">
+            データのバックアップ
+          </h2>
+
+          <button
+            type="button"
+            onClick={downloadBackup}
+            className="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
+          >
+            📥 バックアップを保存
+          </button>
+
+          <label className="mt-3 block w-full cursor-pointer rounded-lg border border-blue-500 px-4 py-2 text-center font-medium text-blue-400 hover:bg-blue-950">
+            📤 バックアップを復元
+
+            <input
+              type="file"
+              accept=".json,application/json"
+              onChange={restoreBackup}
+              className="hidden"
+            />
+          </label>
+        </div>
+
           <h2 className="mb-3 text-xl font-semibold">
             タスク一覧（{tasks.length}件）
           </h2>
@@ -316,6 +435,23 @@ export default function Home() {
               <p className="text-xl font-bold">{completedCount}件</p>
             </div>
           </div>
+
+            <div className="mb-4 grid grid-cols-3 gap-2">
+              <div className="rounded-lg bg-zinc-800 p-3 text-center">
+                <p className="text-xs text-zinc-400">💼 仕事</p>
+                <p className="text-xl font-bold">{workCount}件</p>
+              </div>
+
+              <div className="rounded-lg bg-zinc-800 p-3 text-center">
+                <p className="text-xs text-zinc-400">📚 勉強</p>
+                <p className="text-xl font-bold">{studyCount}件</p>
+              </div>
+
+              <div className="rounded-lg bg-zinc-800 p-3 text-center">
+                <p className="text-xs text-zinc-400">🏠 プライベート</p>
+                <p className="text-xl font-bold">{personalCount}件</p>
+              </div>
+            </div>
 
           <div className="mb-4 rounded-lg border border-zinc-700 p-4">
             <p className="mb-3 text-sm font-medium">
