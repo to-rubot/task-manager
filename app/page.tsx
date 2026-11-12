@@ -174,6 +174,23 @@ export default function Home() {
 
   const dueTodayCount = tasks.filter((task) => isDueToday(task)).length;
 
+  const progressRate =
+    tasks.length === 0
+      ? 0
+      : Math.round((completedCount / tasks.length) * 100);
+
+  const deleteCompletedTasks = () => {
+    if (completedCount === 0) return;
+
+    const ok = window.confirm(
+      `完了済みのタスク ${completedCount} 件をすべて削除しますか？`
+    );
+
+    if (!ok) return;
+
+    setTasks(tasks.filter((task) => !task.completed));
+  };
+
   const addTask = () => {
     if (!taskName.trim()) {
       setTaskNameError("タスク名を入力してください");
@@ -383,34 +400,23 @@ export default function Home() {
 
         <div className="mt-8">
 
-        <div className="mt-6 mb-6 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-          <h2 className="mb-3 text-lg font-semibold">
-            データのバックアップ
-          </h2>
 
-          <button
-            type="button"
-            onClick={downloadBackup}
-            className="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
-          >
-            📥 バックアップを保存
-          </button>
 
-          <label className="mt-3 block w-full cursor-pointer rounded-lg border border-blue-500 px-4 py-2 text-center font-medium text-blue-400 hover:bg-blue-950">
-            📤 バックアップを復元
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="text-xl font-semibold">
+              タスク一覧（{tasks.length}件）
+            </h2>
 
-            <input
-              type="file"
-              accept=".json,application/json"
-              onChange={restoreBackup}
-              className="hidden"
-            />
-          </label>
-        </div>
-
-          <h2 className="mb-3 text-xl font-semibold">
-            タスク一覧（{tasks.length}件）
-          </h2>
+            {completedCount > 0 && (
+              <button
+                type="button"
+                onClick={deleteCompletedTasks}
+                className="rounded-lg border border-red-900 bg-red-950 px-3 py-1.5 text-sm text-red-300"
+              >
+                完了済みをすべて削除
+              </button>
+            )}
+          </div>
 
           {(overdueCount > 0 || dueTodayCount > 0) && (
             <div className="mb-4 rounded-lg border border-red-900 bg-red-950 px-4 py-3 text-sm">
@@ -480,6 +486,22 @@ export default function Home() {
             </div>
           </div>
 
+          <div className="mb-4">
+            <div className="mb-1 flex items-center justify-between text-sm">
+              <span className="text-zinc-400">進捗</span>
+              <span>
+                {progressRate}%（{completedCount}／{tasks.length}件完了）
+              </span>
+            </div>
+
+            <div className="h-3 w-full overflow-hidden rounded-full bg-zinc-800">
+              <div
+                className="h-full rounded-full bg-green-500 transition-all"
+                style={{ width: `${progressRate}%` }}
+              />
+            </div>
+          </div>
+
             <div className="mb-4 grid grid-cols-3 gap-2">
               <div className="rounded-lg bg-zinc-800 p-3 text-center">
                 <p className="text-xs text-zinc-400">💼 仕事</p>
@@ -497,7 +519,11 @@ export default function Home() {
               </div>
             </div>
 
-          <div className="mb-4 rounded-lg border border-zinc-700 p-4">
+          <details className="mb-4 rounded-lg border border-zinc-700 p-4">
+            <summary className="cursor-pointer text-sm font-medium">
+              絞り込み（優先度・カテゴリ）
+            </summary>
+          <div className="mb-4">
             <p className="mb-3 text-sm font-medium">
               優先度で絞り込み
             </p>
@@ -569,6 +595,7 @@ export default function Home() {
         >
           🔄 絞り込みをリセット
         </button>
+          </details>
 
           <div className="mb-4 flex gap-2">
             <button
@@ -803,6 +830,31 @@ export default function Home() {
               ))}
             </div>
           )}
+
+        <div className="mt-6 mb-6 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+          <h2 className="mb-3 text-lg font-semibold">
+            データのバックアップ
+          </h2>
+
+          <button
+            type="button"
+            onClick={downloadBackup}
+            className="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
+          >
+            📥 バックアップを保存
+          </button>
+
+          <label className="mt-3 block w-full cursor-pointer rounded-lg border border-blue-500 px-4 py-2 text-center font-medium text-blue-400 hover:bg-blue-950">
+            📤 バックアップを復元
+
+            <input
+              type="file"
+              accept=".json,application/json"
+              onChange={restoreBackup}
+              className="hidden"
+            />
+          </label>
+        </div>
         </div>
       </div>
     </main>
