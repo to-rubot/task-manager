@@ -14,11 +14,13 @@ export default function Home() {
   const [editingCategory, setEditingCategory] = useState<
     "work" | "study" | "personal" | "unset"
   >("unset");
+  const [editingMemo, setEditingMemo] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [priority, setPriority] = useState<"high" | "medium" | "low">("medium");
   const [category, setCategory] = useState<
     "work" | "study" | "personal"
   >("work");
+  const [taskMemo, setTaskMemo] = useState("");
   const [tasks, setTasks] = useState<
   {
     name: string;
@@ -26,6 +28,7 @@ export default function Home() {
     completed: boolean;
     priority?: "high" | "medium" | "low";
     category?: "work" | "study" | "personal";
+    memo?: string;
   }[]
   >([]);
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
@@ -86,7 +89,7 @@ export default function Home() {
       (selectedCategory === "unset" && !task.category) ||
       task.category === selectedCategory;
 
-    const matchesSearch = task.name
+    const matchesSearch = (task.name + " " + (task.memo ?? ""))
       .toLowerCase()
       .includes(searchQuery.trim().toLowerCase());
 
@@ -207,11 +210,13 @@ export default function Home() {
         completed: false,
         priority,
         category,
+        memo: taskMemo.trim() || undefined,
       },
     ]);
 
     setTaskName("");
     setDueDate("");
+    setTaskMemo("");
   };
 
   const tabClass = (value: "all" | "active" | "completed") =>
@@ -278,7 +283,10 @@ export default function Home() {
               task.category === undefined ||
               ["work", "study", "personal"].includes(
                 String(task.category)
-              ))
+              )) &&
+            (!("memo" in task) ||
+              task.memo === undefined ||
+              typeof task.memo === "string")
         )
       ) {
         alert("バックアップファイルの形式が正しくありません。");
@@ -390,6 +398,20 @@ export default function Home() {
             </select>
           </div>
 
+          <div>
+            <label className="mb-2 block text-sm font-medium">
+              メモ（任意）
+            </label>
+
+            <textarea
+              value={taskMemo}
+              onChange={(e) => setTaskMemo(e.target.value)}
+              placeholder="例：担当者に確認する"
+              rows={2}
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-white"
+            />
+          </div>
+
           <button
             type="submit"
             className="w-full rounded-lg bg-white px-4 py-2 font-medium text-black"
@@ -438,7 +460,7 @@ export default function Home() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="🔍 タスク名を検索..."
+              placeholder="🔍 タスク名・メモを検索..."
               className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2 text-white placeholder-zinc-500 focus:border-blue-500 focus:outline-none"
             />
           </div>
@@ -717,6 +739,18 @@ export default function Home() {
                         </select>
                       </div>
 
+                      <div>
+                        <label className="mb-1 block text-sm text-zinc-400">
+                          メモ
+                        </label>
+                        <textarea
+                          value={editingMemo}
+                          onChange={(e) => setEditingMemo(e.target.value)}
+                          rows={2}
+                          className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-white"
+                        />
+                      </div>
+
                         <div className="flex gap-2">
                           <button
                             type="button"
@@ -732,6 +766,7 @@ export default function Home() {
                                         dueDate: editingDueDate,
                                         priority: editingPriority,
                                         category: editingCategory === "unset" ? undefined : editingCategory,
+                                        memo: editingMemo.trim() || undefined,
                                       }
                                     : t
                                 )
@@ -800,6 +835,12 @@ export default function Home() {
                       : "未設定"}
                     </p>
 
+                  {task.memo && (
+                    <p className="mt-1 whitespace-pre-wrap text-sm text-zinc-300">
+                      📝 {task.memo}
+                    </p>
+                  )}
+
                   <button
                     type="button"
                     onClick={() => {
@@ -808,6 +849,7 @@ export default function Home() {
                       setEditingDueDate(task.dueDate);
                       setEditingPriority(task.priority ?? "medium");
                       setEditingCategory(task.category ?? "unset");
+                      setEditingMemo(task.memo ?? "");
                     }}
                     className="mt-3 mr-2 rounded-lg border border-blue-400 px-3 py-1 text-sm text-blue-400 hover:bg-blue-950"
                   >
