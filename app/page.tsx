@@ -15,12 +15,18 @@ export default function Home() {
     "work" | "study" | "personal" | "unset"
   >("unset");
   const [editingMemo, setEditingMemo] = useState("");
+  const [editingRepeat, setEditingRepeat] = useState<
+    "none" | "daily" | "weekly" | "monthly"
+  >("none");
   const [dueDate, setDueDate] = useState("");
   const [priority, setPriority] = useState<"high" | "medium" | "low">("medium");
   const [category, setCategory] = useState<
     "work" | "study" | "personal"
   >("work");
   const [taskMemo, setTaskMemo] = useState("");
+  const [repeat, setRepeat] = useState<
+    "none" | "daily" | "weekly" | "monthly"
+  >("none");
   const [tasks, setTasks] = useState<
   {
     name: string;
@@ -29,6 +35,7 @@ export default function Home() {
     priority?: "high" | "medium" | "low";
     category?: "work" | "study" | "personal";
     memo?: string;
+    repeat?: "daily" | "weekly" | "monthly";
   }[]
   >([]);
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
@@ -211,12 +218,64 @@ export default function Home() {
         priority,
         category,
         memo: taskMemo.trim() || undefined,
+        repeat: repeat === "none" ? undefined : repeat,
       },
     ]);
 
     setTaskName("");
     setDueDate("");
     setTaskMemo("");
+    setRepeat("none");
+  };
+
+  const nextDueDate = (
+    base: string,
+    repeatUnit: "daily" | "weekly" | "monthly"
+  ): string => {
+    const start = base || today;
+    const [year, month, day] = start.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+
+    if (repeatUnit === "daily") {
+      date.setDate(date.getDate() + 1);
+    } else if (repeatUnit === "weekly") {
+      date.setDate(date.getDate() + 7);
+    } else {
+      const targetMonth = date.getMonth() + 1;
+      const lastDay = new Date(
+        date.getFullYear(),
+        targetMonth + 1,
+        0
+      ).getDate();
+      date.setDate(Math.min(date.getDate(), lastDay));
+      date.setMonth(targetMonth);
+    }
+
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+      date.getDate()
+    )}`;
+  };
+
+  const toggleTask = (index: number) => {
+    setTasks((prev) => {
+      const target = prev[index];
+      if (!target) return prev;
+
+      const updated = prev.map((t, i) =>
+        i === index ? { ...t, completed: !t.completed } : t
+      );
+
+      if (!target.completed && target.repeat) {
+        updated.push({
+          ...target,
+          completed: false,
+          dueDate: nextDueDate(target.dueDate, target.repeat),
+        });
+      }
+
+      return updated;
+    });
   };
 
   const tabClass = (value: "all" | "active" | "completed") =>
@@ -286,7 +345,12 @@ export default function Home() {
               )) &&
             (!("memo" in task) ||
               task.memo === undefined ||
-              typeof task.memo === "string")
+              typeof task.memo === "string") &&
+            (!("repeat" in task) ||
+              task.repeat === undefined ||
+              ["daily", "weekly", "monthly"].includes(
+                String(task.repeat)
+              ))
         )
       ) {
         alert("バックアップファイルの形式が正しくありません。");
@@ -410,6 +474,31 @@ export default function Home() {
               rows={2}
               className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-white"
             />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium">
+              繰り返し
+            </label>
+
+            <select
+              value={repeat}
+              onChange={(e) =>
+                setRepeat(
+                  e.target.value as
+                    | "none"
+                    | "daily"
+                    | "weekly"
+                    | "monthly"
+                )
+              }
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-white"
+            >
+              <option value="none">繰り返さない</option>
+              <option value="daily">🔁 毎日</option>
+              <option value="weekly">🔁 毎週</option>
+              <option value="monthly">🔁 毎月</option>
+            </select>
           </div>
 
           <button
@@ -662,15 +751,7 @@ export default function Home() {
                     <input
                       type="checkbox"
                       checked={task.completed}
-                      onChange={() => {
-                        setTasks((prev) =>
-                          prev.map((t, i) =>
-                            i === index
-                              ? { ...t, completed: !t.completed }
-                              : t
-                          )
-                        );
-                      }}
+                      onChange={() => toggleTask(index)}
                     />
 
                     {editingIndex === index ? (
@@ -751,6 +832,30 @@ export default function Home() {
                         />
                       </div>
 
+                      <div>
+                        <label className="mb-1 block text-sm text-zinc-400">
+                          繰り返し
+                        </label>
+                        <select
+                          value={editingRepeat}
+                          onChange={(e) =>
+                            setEditingRepeat(
+                              e.target.value as
+                                | "none"
+                                | "daily"
+                                | "weekly"
+                                | "monthly"
+                            )
+                          }
+                          className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-white"
+                        >
+                          <option value="none">繰り返さない</option>
+                          <option value="daily">🔁 毎日</option>
+                          <option value="weekly">🔁 毎週</option>
+                          <option value="monthly">🔁 毎月</option>
+                        </select>
+                      </div>
+
                         <div className="flex gap-2">
                           <button
                             type="button"
@@ -767,6 +872,7 @@ export default function Home() {
                                         priority: editingPriority,
                                         category: editingCategory === "unset" ? undefined : editingCategory,
                                         memo: editingMemo.trim() || undefined,
+                                        repeat: editingRepeat === "none" ? undefined : editingRepeat,
                                       }
                                     : t
                                 )
@@ -841,6 +947,17 @@ export default function Home() {
                     </p>
                   )}
 
+                  {task.repeat && (
+                    <p className="mt-1 text-sm text-zinc-400">
+                      繰り返し：🔁{" "}
+                      {task.repeat === "daily"
+                        ? "毎日"
+                        : task.repeat === "weekly"
+                        ? "毎週"
+                        : "毎月"}
+                    </p>
+                  )}
+
                   <button
                     type="button"
                     onClick={() => {
@@ -850,6 +967,7 @@ export default function Home() {
                       setEditingPriority(task.priority ?? "medium");
                       setEditingCategory(task.category ?? "unset");
                       setEditingMemo(task.memo ?? "");
+                      setEditingRepeat(task.repeat ?? "none");
                     }}
                     className="mt-3 mr-2 rounded-lg border border-blue-400 px-3 py-1 text-sm text-blue-400 hover:bg-blue-950"
                   >
