@@ -46,6 +46,8 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<
     "all" | "work" | "study" | "personal" | "unset"
   >("all");
+  const [dueFrom, setDueFrom] = useState("");
+  const [dueTo, setDueTo] = useState("");
   const [sortOrder, setSortOrder] = useState<
   "added" | "due" | "priority"
 >("added");
@@ -102,11 +104,18 @@ export default function Home() {
       .toLowerCase()
       .includes(searchQuery.trim().toLowerCase());
 
+    const matchesDue =
+      (!dueFrom && !dueTo) ||
+      (!!task.dueDate &&
+        (!dueFrom || task.dueDate >= dueFrom) &&
+        (!dueTo || task.dueDate <= dueTo));
+
     return (
       matchesStatus &&
       matchesPriority &&
       matchesSearch &&
-      matchesCategory
+      matchesCategory &&
+      matchesDue
     );
   });
 
@@ -651,7 +660,7 @@ export default function Home() {
 
           <details className="mb-4 rounded-lg border border-zinc-700 p-4">
             <summary className="cursor-pointer text-sm font-medium">
-              絞り込み（優先度・カテゴリ）
+              絞り込み（優先度・カテゴリ・期限）
             </summary>
           <div className="mb-4">
             <p className="mb-3 text-sm font-medium">
@@ -713,6 +722,38 @@ export default function Home() {
             </select>
           </div>
 
+        <div className="mb-4">
+          <p className="mb-3 text-sm font-medium">
+            期限で絞り込み
+          </p>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={dueFrom}
+              onChange={(e) => setDueFrom(e.target.value)}
+              onClick={(e) => e.currentTarget.showPicker()}
+              style={{ colorScheme: "dark" }}
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white"
+            />
+
+            <span className="text-sm text-zinc-400">〜</span>
+
+            <input
+              type="date"
+              value={dueTo}
+              onChange={(e) => setDueTo(e.target.value)}
+              onClick={(e) => e.currentTarget.showPicker()}
+              style={{ colorScheme: "dark" }}
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white"
+            />
+          </div>
+
+          <p className="mt-2 text-xs text-zinc-500">
+            ※ 期間を指定すると、期限が未設定のタスクは表示されません
+          </p>
+        </div>
+
         <button
           type="button"
           onClick={() => {
@@ -720,6 +761,8 @@ export default function Home() {
             setFilter("all");
             setSelectedPriorities(["high", "medium", "low"]);
             setSelectedCategory("all");
+            setDueFrom("");
+            setDueTo("");
           }}
           className="mb-4 w-full rounded-lg border border-zinc-600 px-4 py-2 text-sm text-white hover:bg-zinc-800"
         >
