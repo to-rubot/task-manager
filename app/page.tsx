@@ -50,6 +50,8 @@ export default function Home() {
   "added" | "due" | "priority"
 >("added");
   const [prioritizeActive, setPrioritizeActive] = useState(false);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [tasksLoaded, setTasksLoaded] = useState(false);
 
   useEffect(() => {
@@ -275,6 +277,17 @@ export default function Home() {
       }
 
       return updated;
+    });
+  };
+
+  const moveTask = (from: number, to: number) => {
+    if (from === to) return;
+
+    setTasks((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
     });
   };
 
@@ -570,6 +583,12 @@ export default function Home() {
             </select>
           </div>
 
+          {sortOrder === "added" && (
+            <p className="mb-4 text-xs text-zinc-500">
+              ↕ タスクはドラッグで並び替えできます（「追加した順」のときのみ）
+            </p>
+          )}
+
           <label className="mb-4 flex items-center gap-2 text-sm text-white">
             <input
               type="checkbox"
@@ -745,9 +764,42 @@ export default function Home() {
               {sortedTasks.map(({ task, index }) => (
                 <div
                   key={index}
-                  className="rounded-xl border border-zinc-800 bg-zinc-900 p-4"
+                  draggable={
+                    sortOrder === "added" && editingIndex !== index
+                  }
+                  onDragStart={() => setDragIndex(index)}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOverIndex(index);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (dragIndex !== null) moveTask(dragIndex, index);
+                    setDragIndex(null);
+                    setDragOverIndex(null);
+                  }}
+                  onDragEnd={() => {
+                    setDragIndex(null);
+                    setDragOverIndex(null);
+                  }}
+                  className={`rounded-xl border bg-zinc-900 p-4 ${
+                    dragOverIndex === index &&
+                    dragIndex !== null &&
+                    dragIndex !== index
+                      ? "border-blue-500"
+                      : "border-zinc-800"
+                  } ${dragIndex === index ? "opacity-50" : ""}`}
                 >
                   <div className="flex items-center gap-2">
+                    {sortOrder === "added" && (
+                      <span
+                        className="cursor-grab text-zinc-500"
+                        title="ドラッグで並び替え"
+                      >
+                        ⠿
+                      </span>
+                    )}
+
                     <input
                       type="checkbox"
                       checked={task.completed}
