@@ -594,7 +594,7 @@ export default function Home() {
 
           {sortOrder === "added" && (
             <p className="mb-4 text-xs text-zinc-500">
-              ↕ タスクはドラッグで並び替えできます（「追加した順」のときのみ）
+              ↕ ⠿ をドラッグするとタスクを並び替えできます（「追加した順」のときのみ・スマホ対応）
             </p>
           )}
 
@@ -807,24 +807,7 @@ export default function Home() {
               {sortedTasks.map(({ task, index }) => (
                 <div
                   key={index}
-                  draggable={
-                    sortOrder === "added" && editingIndex !== index
-                  }
-                  onDragStart={() => setDragIndex(index)}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setDragOverIndex(index);
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    if (dragIndex !== null) moveTask(dragIndex, index);
-                    setDragIndex(null);
-                    setDragOverIndex(null);
-                  }}
-                  onDragEnd={() => {
-                    setDragIndex(null);
-                    setDragOverIndex(null);
-                  }}
+                  data-task-index={index}
                   className={`rounded-xl border bg-zinc-900 p-4 ${
                     dragOverIndex === index &&
                     dragIndex !== null &&
@@ -836,8 +819,44 @@ export default function Home() {
                   <div className="flex items-center gap-2">
                     {sortOrder === "added" && (
                       <span
-                        className="cursor-grab text-zinc-500"
+                        className="cursor-grab touch-none select-none px-1 text-lg leading-none text-zinc-500"
                         title="ドラッグで並び替え"
+                        onPointerDown={(e) => {
+                          if (editingIndex === index) return;
+                          e.preventDefault();
+                          e.currentTarget.setPointerCapture(
+                            e.pointerId
+                          );
+                          setDragIndex(index);
+                          setDragOverIndex(index);
+                        }}
+                        onPointerMove={(e) => {
+                          if (dragIndex === null) return;
+                          const el = document
+                            .elementFromPoint(e.clientX, e.clientY)
+                            ?.closest("[data-task-index]");
+                          if (el) {
+                            setDragOverIndex(
+                              Number(
+                                el.getAttribute("data-task-index")
+                              )
+                            );
+                          }
+                        }}
+                        onPointerUp={() => {
+                          if (
+                            dragIndex !== null &&
+                            dragOverIndex !== null
+                          ) {
+                            moveTask(dragIndex, dragOverIndex);
+                          }
+                          setDragIndex(null);
+                          setDragOverIndex(null);
+                        }}
+                        onPointerCancel={() => {
+                          setDragIndex(null);
+                          setDragOverIndex(null);
+                        }}
                       >
                         ⠿
                       </span>
