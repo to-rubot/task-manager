@@ -139,6 +139,17 @@ export default function Home() {
     return !task.completed && task.dueDate === today;
   };
 
+  const tomorrowDate = new Date();
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const tomorrow = tomorrowDate.toLocaleDateString("sv-SE");
+
+  const isDueTomorrow = (task: {
+    dueDate: string;
+    completed: boolean;
+  }) => {
+    return !task.completed && task.dueDate === tomorrow;
+  };
+
   const sortedTasks = [...filteredTasks].sort((a, b) => {
     if (prioritizeActive && a.task.completed !== b.task.completed) {
       return a.task.completed ? 1 : -1;
@@ -1027,12 +1038,27 @@ export default function Home() {
                         ? "font-semibold text-red-400"
                         : isDueToday(task)
                         ? "font-semibold text-yellow-400"
+                        : isDueTomorrow(task)
+                        ? "font-semibold text-sky-400"
                         : "text-zinc-400"
                     }`}
                   >
                     期限：{task.dueDate || "未設定"}
-                    {isOverdue(task) && " ⚠️ 期限切れ"}
-                    {isDueToday(task) && " 🟡 今日が期限"}
+                    {isOverdue(task) && (
+                      <span className="ml-2 rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-semibold text-red-300">
+                        期限切れ
+                      </span>
+                    )}
+                    {isDueToday(task) && (
+                      <span className="ml-2 rounded-full bg-yellow-500/20 px-2 py-0.5 text-xs font-semibold text-yellow-300">
+                        今日が期限
+                      </span>
+                    )}
+                    {isDueTomorrow(task) && (
+                      <span className="ml-2 rounded-full bg-sky-500/20 px-2 py-0.5 text-xs font-semibold text-sky-300">
+                        明日が期限
+                      </span>
+                    )}
                   </p>
 
                   <p className="mt-1 text-sm">
@@ -1086,6 +1112,24 @@ export default function Home() {
                     className="mt-3 mr-2 rounded-lg border border-blue-400 px-3 py-1 text-sm text-blue-400 hover:bg-blue-950"
                   >
                     編集
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTasks((prev) => {
+                        const copy = {
+                          ...prev[index],
+                          completed: false,
+                        };
+                        const next = [...prev];
+                        next.splice(index + 1, 0, copy);
+                        return next;
+                      });
+                    }}
+                    className="mt-3 mr-2 rounded-lg border border-zinc-400 px-3 py-1 text-sm text-zinc-300 hover:bg-zinc-800"
+                  >
+                    複製
                   </button>
 
                   <button
