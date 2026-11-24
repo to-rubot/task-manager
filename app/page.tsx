@@ -36,6 +36,7 @@ export default function Home() {
     category?: "work" | "study" | "personal";
     memo?: string;
     repeat?: "daily" | "weekly" | "monthly";
+    pinned?: boolean;
   }[]
   >([]);
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
@@ -151,6 +152,10 @@ export default function Home() {
   };
 
   const sortedTasks = [...filteredTasks].sort((a, b) => {
+    if (!!a.task.pinned !== !!b.task.pinned) {
+      return a.task.pinned ? -1 : 1;
+    }
+
     if (prioritizeActive && a.task.completed !== b.task.completed) {
       return a.task.completed ? 1 : -1;
     }
@@ -221,6 +226,24 @@ export default function Home() {
     if (!ok) return;
 
     setTasks(tasks.filter((task) => !task.completed));
+  };
+
+  const togglePin = (index: number) => {
+    setTasks((prev) =>
+      prev.map((t, i) =>
+        i === index ? { ...t, pinned: !t.pinned } : t
+      )
+    );
+  };
+
+  const formatDueDate = (dueDate: string): string => {
+    if (!dueDate) return "未設定";
+
+    const [year, month, day] = dueDate.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+    const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+
+    return `${month}/${day}（${weekdays[date.getDay()]}）`;
   };
 
   const addTask = () => {
@@ -824,6 +847,8 @@ export default function Home() {
                     dragIndex !== null &&
                     dragIndex !== index
                       ? "border-blue-500"
+                      : task.pinned
+                      ? "border-amber-500/60"
                       : "border-zinc-800"
                   } ${dragIndex === index ? "opacity-50" : ""}`}
                 >
@@ -1027,7 +1052,7 @@ export default function Home() {
                             : "font-medium"
                           }
                         >
-                          {task.name}
+                          {task.pinned ? `📌 ${task.name}` : task.name}
                         </p>
                       )}
                   </div>
@@ -1043,7 +1068,7 @@ export default function Home() {
                         : "text-zinc-400"
                     }`}
                   >
-                    期限：{task.dueDate || "未設定"}
+                    期限：{formatDueDate(task.dueDate)}
                     {isOverdue(task) && (
                       <span className="ml-2 rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-semibold text-red-300">
                         期限切れ
@@ -1097,6 +1122,18 @@ export default function Home() {
                         : "毎月"}
                     </p>
                   )}
+
+                  <button
+                    type="button"
+                    onClick={() => togglePin(index)}
+                    className={`mt-3 mr-2 rounded-lg border px-3 py-1 text-sm ${
+                      task.pinned
+                        ? "border-amber-400 text-amber-300 hover:bg-amber-950"
+                        : "border-zinc-600 text-zinc-300 hover:bg-zinc-800"
+                    }`}
+                  >
+                    {task.pinned ? "📌 ピン解除" : "📌 ピン留め"}
+                  </button>
 
                   <button
                     type="button"
