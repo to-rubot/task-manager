@@ -24,3 +24,32 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ライトテーマ：.theme-light の中では濃色ユーティリティを明色に読み替える */
+.theme-light {
+  background-color: #f4f4f5;
+  color: #18181b;
+}
+.theme-light .bg-zinc-950 { background-color: #ffffff; }
+.theme-light .bg-zinc-900 { background-color: #ffffff; }
+.theme-light .bg-zinc-800 { background-color: #e4e4e7; }
+.theme-light .bg-white { background-color: #18181b; }
+.theme-light .text-black { color: #ffffff; }
+.theme-light .text-white { color: #18181b; }
+.theme-light .text-zinc-300 { color: #3f3f46; }
+.theme-light .text-zinc-400 { color: #52525b; }
+.theme-light .border-zinc-800 { border-color: #d4d4d8; }
+.theme-light .border-zinc-700 { border-color: #d4d4d8; }
+.theme-light .border-zinc-600 { border-color: #a1a1aa; }
+.theme-light .hover\:bg-zinc-800:hover { background-color: #e4e4e7; }
+.theme-light .hover\:bg-blue-950:hover { background-color: #dbeafe; }
+.theme-light .hover\:bg-red-950:hover { background-color: #fee2e2; }
+.theme-light .hover\:bg-amber-950:hover { background-color: #fef3c7; }
+.theme-light .bg-red-950 { background-color: #fef2f2; }
+.theme-light .border-red-900 { border-color: #fecaca; }
+.theme-light .text-red-300 { color: #b91c1c; }
+.theme-light .text-red-400 { color: #dc2626; }
+.theme-light .text-yellow-300 { color: #a16207; }
+.theme-light .text-sky-300 { color: #0369a1; }
+.theme-light .text-amber-300 { color: #b45309; }
+.theme-light .text-blue-400 { color: #2563eb; }

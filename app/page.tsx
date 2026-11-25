@@ -50,12 +50,13 @@ export default function Home() {
   const [dueFrom, setDueFrom] = useState("");
   const [dueTo, setDueTo] = useState("");
   const [sortOrder, setSortOrder] = useState<
-  "added" | "due" | "priority"
+  "added" | "due" | "priority" | "name"
 >("added");
   const [prioritizeActive, setPrioritizeActive] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [tasksLoaded, setTasksLoaded] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   useEffect(() => {
     const savedTasks = localStorage.getItem("task-manager-tasks");
@@ -72,6 +73,11 @@ export default function Home() {
       }
     }
   
+    const savedTheme = localStorage.getItem("task-manager-theme");
+    if (savedTheme === "light") {
+      setTheme("light");
+    }
+
     setTasksLoaded(true);
   }, []);
 
@@ -177,6 +183,13 @@ export default function Home() {
       return bPriority - aPriority || a.index - b.index;
     }
   
+    if (sortOrder === "name") {
+      return (
+        a.task.name.localeCompare(b.task.name, "ja") ||
+        a.index - b.index
+      );
+    }
+
     if (!a.task.dueDate && !b.task.dueDate) {
       return a.index - b.index;
     }
@@ -334,6 +347,14 @@ export default function Home() {
     });
   };
 
+  const toggleTheme = () => {
+    setTheme((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
+      localStorage.setItem("task-manager-theme", next);
+      return next;
+    });
+  };
+
   const tabClass = (value: "all" | "active" | "completed") =>
     filter === value
       ? "rounded-lg bg-white px-3 py-2 text-sm font-medium text-black"
@@ -429,11 +450,23 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-6 py-10 text-white">
+    <main
+      className={`min-h-screen bg-zinc-950 px-6 py-10 text-white ${
+        theme === "light" ? "theme-light" : ""
+      }`}
+    >
       <div className="mx-auto max-w-xl">
-        <h1 className="mb-8 text-3xl font-bold">
-          タスク管理アプリ
-        </h1>
+        <div className="mb-8 flex items-center justify-between">
+          <h1 className="text-3xl font-bold">タスク管理アプリ</h1>
+
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="rounded-lg border border-zinc-600 px-3 py-2 text-sm"
+          >
+            {theme === "dark" ? "☀️ ライト" : "🌙 ダーク"}
+          </button>
+        </div>
 
         <form
           onSubmit={(e) => {
@@ -473,7 +506,7 @@ export default function Home() {
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
               onClick={(e) => e.currentTarget.showPicker()}
-              style={{ colorScheme: "dark" }}
+              style={{ colorScheme: theme }}
               className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-white"
             />
           </div>
@@ -616,13 +649,16 @@ export default function Home() {
             <select
               value={sortOrder}
               onChange={(e) =>
-                setSortOrder(e.target.value as "added" | "due")
+                setSortOrder(
+                e.target.value as "added" | "due" | "priority" | "name"
+              )
               }
               className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
             >
               <option value="added">追加した順</option>
               <option value="due">期限が近い順</option>
               <option value="priority">優先度が高い順</option>
+              <option value="name">名前順</option>
             </select>
           </div>
 
@@ -767,7 +803,7 @@ export default function Home() {
               value={dueFrom}
               onChange={(e) => setDueFrom(e.target.value)}
               onClick={(e) => e.currentTarget.showPicker()}
-              style={{ colorScheme: "dark" }}
+              style={{ colorScheme: theme }}
               className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white"
             />
 
@@ -778,7 +814,7 @@ export default function Home() {
               value={dueTo}
               onChange={(e) => setDueTo(e.target.value)}
               onClick={(e) => e.currentTarget.showPicker()}
-              style={{ colorScheme: "dark" }}
+              style={{ colorScheme: theme }}
               className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white"
             />
           </div>
@@ -921,7 +957,7 @@ export default function Home() {
                             type="date"
                             value={editingDueDate}
                             onChange={(e) => setEditingDueDate(e.target.value)}
-                            style={{ colorScheme: "dark" }}
+                            style={{ colorScheme: theme }}
                             className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-white"
                           />
                         </div>
