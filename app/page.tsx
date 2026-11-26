@@ -40,6 +40,7 @@ export default function Home() {
   }[]
   >([]);
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
+  const [urgentOnly, setUrgentOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPriorities, setSelectedPriorities] = useState<
     ("high" | "medium" | "low")[]
@@ -90,6 +91,8 @@ export default function Home() {
     );
   }, [tasks, tasksLoaded]);
 
+  const todayForFilter = new Date().toLocaleDateString("sv-SE");
+
   const filteredTasks = tasks
   .map((task, index) => ({ task, index }))
   .filter(({ task }) => {
@@ -117,12 +120,19 @@ export default function Home() {
         (!dueFrom || task.dueDate >= dueFrom) &&
         (!dueTo || task.dueDate <= dueTo));
 
+    const matchesUrgent =
+      !urgentOnly ||
+      (!task.completed &&
+        !!task.dueDate &&
+        task.dueDate <= todayForFilter);
+
     return (
       matchesStatus &&
       matchesPriority &&
       matchesSearch &&
       matchesCategory &&
-      matchesDue
+      matchesDue &&
+      matchesUrgent
     );
   });
 
@@ -833,12 +843,25 @@ export default function Home() {
             setSelectedCategory("all");
             setDueFrom("");
             setDueTo("");
+            setUrgentOnly(false);
           }}
           className="mb-4 w-full rounded-lg border border-zinc-600 px-4 py-2 text-sm text-white hover:bg-zinc-800"
         >
           🔄 絞り込みをリセット
         </button>
           </details>
+
+          <button
+            type="button"
+            onClick={() => setUrgentOnly((prev) => !prev)}
+            className={
+              urgentOnly
+                ? "mb-4 w-full rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white"
+                : "mb-4 w-full rounded-lg border border-red-900 bg-red-950 px-4 py-2 text-sm text-red-300"
+            }
+          >
+            ⚠️ 期限切れ・今日が期限だけ表示{urgentOnly ? "（ON）" : ""}
+          </button>
 
           <div className="mb-4 flex gap-2">
             <button
